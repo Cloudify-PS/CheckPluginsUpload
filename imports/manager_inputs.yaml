@@ -1,0 +1,34 @@
+inputs:
+
+  manager_user:
+    type: string
+    default: centos
+    description: >
+      Manager user name.
+
+  manager_key:
+    type: string
+    description: >
+      Manager key.
+
+  manager_host:
+    type: string
+    description: >
+      Manager public ip.
+
+  manager_privateip:
+    type: string
+    description: >
+      Manager private ip.
+
+  manager_cloudify_password:
+    type: string
+    default: admin
+    description: >
+      Manager cloudify password.
+
+  manager_package:
+    type: string
+    default: 4.4.0/rc1-release/cloudify-manager-install-4.4rc1.rpm
+    description: >
+      Manager package.

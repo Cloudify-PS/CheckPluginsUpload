@@ -1,0 +1,28 @@
+node_templates:
+
+  manager_install:
+    type: cloudify.terminal.raw
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            terminal_auth: &terminal_auth
+              user: { get_input: manager_user }
+              ip: { get_input: manager_host }
+              key_content: { get_input: manager_key }
+              port: 22
+              promt_check:
+                - '#'
+                - '$'
+            calls:
+              - action: {concat:["sudo rpm -i http://repository.cloudifysource.org/cloudify/", { get_input: manager_package }]}
+              - action: {concat:["cfy_manager install --clean-db --private-ip ", { get_input: manager_privateip }, " --public-ip ", { get_input: manager_host }, " -a ", { get_input: manager_cloudify_password }]}
+              - action: cfy plugins bundle-upload
+        delete:
+          inputs:
+            terminal_auth: *terminal_auth
+            calls:
+              - action: cfy_manager remove --force
+              - action: sudo rpm -e cloudify-rest-service cloudify-premium
+              - action: sudo rpm -e cloudify-logstash cloudify cloudify-manager-ip-setter
+              - action: sudo rpm -e cloudify-rabbitmq cloudify-agents cloudify-management-worker

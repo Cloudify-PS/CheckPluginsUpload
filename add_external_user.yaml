@@ -1,0 +1,54 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.8.2/plugin.yaml
+  - imports/manager.yaml
+  - imports/manager_inputs.yaml
+
+node_templates:
+
+  external_auth:
+    type: cloudify.nodes.WebServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            fabric_env: &fab_env
+              user: { get_input: manager_user }
+              key: { get_input: manager_key }
+              host_string: { get_input: manager_host }
+            script_path: scripts/external_auth.sh
+    relationships:
+    - target: manager_install
+      type: cloudify.relationships.depends_on
+
+  external_user:
+    type: cloudify.terminal.raw
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            terminal_auth: &terminal_auth
+              user: { get_input: manager_user }
+              ip: { get_input: manager_host }
+              key_content: { get_input: manager_key }
+              port: 22
+              promt_check:
+                - '#'
+                - '$'
+            calls:
+              - action: cfy users create external -p explicit_password -t default_tenant
+              - action: sudo reboot
+        delete:
+          inputs:
+            terminal_auth: *terminal_auth
+            calls:
+              - action: sudo rm -rf /opt/manager/resources/authenticators/
+
+    relationships:
+    - target: external_auth
+      type: cloudify.relationships.depends_on
+
