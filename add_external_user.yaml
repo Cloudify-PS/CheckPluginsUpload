@@ -47,7 +47,6 @@ node_templates:
             terminal_auth: *terminal_auth
             calls:
               - action: sudo rm -rf /opt/manager/resources/authenticators/
-
     relationships:
     - target: external_auth
       type: cloudify.relationships.depends_on
