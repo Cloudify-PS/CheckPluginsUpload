@@ -7,7 +7,7 @@ echo '
 from cloudify_premium.authentication.auth_base import AuthBase, UserData
 
 
-class MyAuthentication(AuthBase):
+class MeMeAuthentication(AuthBase):
 
     def _authenticate_request(self, request):
         auth = request.authorization
@@ -15,26 +15,25 @@ class MyAuthentication(AuthBase):
             return UserData(auth.username)
         return None
 
+    def configure(self, logger):
+        """
+        Set the object instance.
+        Being called after the configuration is loaded
+        """
+        self.logger = logger
+        return self
 
-def configure(self, logger):
-   """
-   Set the object instance.
-   Being called after the configuration is loaded
-   """
-   self.logger = logger
-   return self
-
-
-def can_handle_auth_request(self, request):
-   """
-   Validate that this authenticator can handle auth process,
-   for given request
-   """
-   return request.authorization
+    def can_handle_auth_request(self, request):
+        """
+        Validate that this authenticator can handle auth process,
+        for given request
+        """
+        return request.authorization
 
 
-my_auth = MyAuthentication()
-configure = my_auth.configure
+meme_auth = MeMeAuthentication()
+configure = meme_auth.configure
+
 ' | sudo tee /opt/manager/resources/authenticators/authentication.py
 
 sudo chown cfyuser:cfyuser -R /opt/manager/resources/authenticators/
