@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
   - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.8.2/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/scale_executer/plugin.yaml
   - imports/manager.yaml
   - imports/manager_inputs.yaml
 
@@ -14,26 +14,6 @@ inputs:
 
 node_templates:
 
-  plugin_upload:
-    type: cloudify.terminal.raw
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            terminal_auth: &terminal_auth
-              user: { get_input: manager_user }
-              ip: { get_input: manager_host }
-              key_content: { get_input: manager_key }
-              port: 22
-              promt_check:
-                - '#'
-                - '$'
-            calls:
-              - action: cfy plugin upload https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.8.2/cloudify_utilities_plugin-1.8.2-py27-none-linux_x86_64-centos-Core.wgn -y http://www.getcloudify.org/spec/utilities-plugin/1.8.3/plugin.yaml
-    relationships:
-    - target: manager_install
-      type: cloudify.relationships.depends_on
-
   deployment_proxy:
     type: cloudify.nodes.DeploymentProxy
     properties:
@@ -42,6 +22,11 @@ node_templates:
         username: admin
         password: { get_input: manager_cloudify_password }
         tenant: default_tenant
+      secrets:
+        a: b
+      plugins:
+        - wagon_path: https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.8.2/cloudify_utilities_plugin-1.8.2-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: http://www.getcloudify.org/spec/utilities-plugin/1.8.3/plugin.yaml
       resource_config:
         blueprint:
           id: deployment_proxy
@@ -60,5 +45,5 @@ node_templates:
           inputs:
             workflow_id: uninstall
     relationships:
-    - target: plugin_upload
+    - target: manager_install
       type: cloudify.relationships.depends_on
