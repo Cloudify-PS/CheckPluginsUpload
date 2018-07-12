@@ -12,31 +12,43 @@ inputs:
   archive:
     default: https://github.com/cloudify-examples/openstack-example-network/archive/master.zip
 
-node_templates:
+  keystone_username:
+    description: OS_USERNAME as specified in Openstack RC file.
+    default: { get_secret: keystone_username }
 
-  plugin_upload:
-    type: cloudify.terminal.raw
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            terminal_auth: &terminal_auth
-              user: { get_input: manager_user }
-              ip: { get_input: manager_host }
-              key_content: { get_input: manager_key }
-              port: 22
-              promt_check:
-                - '#'
-                - '$'
-            calls:
-              - action: cfy plugin upload https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.9.3/cloudify_openstack_plugin-2.9.3-py27-none-linux_x86_64-centos-Core.wgn -y https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.9.3/plugin.yaml
-    relationships:
-    - target: manager_install
-      type: cloudify.relationships.depends_on
+  keystone_password:
+    description: Openstack user password.
+    default: { get_secret: keystone_password }
+
+  keystone_tenant_name:
+    description: OS_TENANT_NAME as specified in Openstack RC file.
+    default: { get_secret: keystone_tenant_name }
+
+  keystone_url:
+    description: OS_AUTH_URL as specified in Openstack RC file.
+    default: { get_secret: keystone_url }
+
+  keystone_region:
+    description: OS_REGION_NAME as specified in Openstack RC file.
+    default: { get_secret: keystone_region }
+
+  external_network_name:
+    description: Openstack tenant external network name
+
+node_templates:
 
   deployment_proxy:
     type: cloudify.nodes.DeploymentProxy
     properties:
+      secrets:
+        keystone_username: { get_input: keystone_username }
+        keystone_password: { get_input: keystone_password }
+        keystone_tenant_name: { get_input: keystone_tenant_name }
+        keystone_url: { get_input: keystone_url }
+        keystone_region: { get_input: keystone_region }
+      plugins:
+        - wagon_path: https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.9.3/cloudify_openstack_plugin-2.9.3-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: https://github.com/cloudify-cosmo/cloudify-openstack-plugin/releases/download/2.9.3/plugin.yaml
       client:
         host: { get_input: manager_host }
         username: admin
@@ -49,6 +61,8 @@ node_templates:
           main_file_name: simple-blueprint.yaml
         deployment:
           id: deployment_proxy
+          inputs:
+            external_network_name: { get_input: external_network_name }
           outputs:
             key: deployment_proxy_output
     interfaces:
@@ -60,5 +74,5 @@ node_templates:
           inputs:
             workflow_id: uninstall
     relationships:
-    - target: plugin_upload
+    - target: manager_install
       type: cloudify.relationships.depends_on
