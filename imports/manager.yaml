@@ -15,7 +15,7 @@ node_templates:
                 - '#'
                 - '$'
             calls:
-              - action: {concat:["sudo rpm -i http://repository.cloudifysource.org/cloudify/", { get_input: manager_package }]}
+              - action: {concat:["sudo rpm --force -i http://repository.cloudifysource.org/cloudify/", { get_input: manager_package }]}
               - action: {concat:["cfy_manager install --clean-db --private-ip ", { get_input: manager_privateip }, " --public-ip ", { get_input: manager_host }, " -a ", { get_input: manager_cloudify_password }]}
               - action: cfy plugins bundle-upload
         delete:
@@ -26,3 +26,4 @@ node_templates:
               - action: sudo rpm -e cloudify-rest-service cloudify-premium
               - action: sudo rpm -e cloudify-logstash cloudify cloudify-manager-ip-setter
               - action: sudo rpm -e cloudify-rabbitmq cloudify-agents cloudify-management-worker
+              - action: sudo rpm -e cloudify-manager-install

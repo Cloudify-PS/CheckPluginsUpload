@@ -29,6 +29,6 @@ inputs:
 
   manager_package:
     type: string
-    default: 4.4.0/rc1-release/cloudify-manager-install-4.4rc1.rpm
+    default: 4.4.0/rc2-release/cloudify-manager-install-4.4rc2.rpm
     description: >
       Manager package.
