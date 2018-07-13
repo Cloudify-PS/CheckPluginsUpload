@@ -1,0 +1,63 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
+  - imports/manager.yaml
+  - imports/manager_inputs.yaml
+
+inputs:
+
+  archive:
+    default: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/master.zip
+
+  aws_access_key_id:
+    type: string
+    default: { get_secret: aws_access_key_id }
+
+  aws_secret_access_key:
+    type: string
+    default: { get_secret: aws_secret_access_key }
+
+  aws_region_name:
+    type: string
+    default: { get_secret: ec2_region_name }
+
+node_templates:
+
+  deployment_proxy:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      secrets:
+        aws_access_key_id: { get_input: aws_access_key_id }
+        aws_secret_access_key: { get_input: aws_secret_access_key }
+        aws_region_name: { get_input: aws_region_name }
+      plugins:
+        - wagon_path: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/releases/download/2.3.4/cloudify_awssdk_plugin-2.3.4-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/releases/download/2.3.4/plugin.yaml
+      client:
+        host: { get_input: manager_host }
+        username: admin
+        password: { get_input: manager_cloudify_password }
+        tenant: default_tenant
+      resource_config:
+        blueprint:
+          id: deployment_proxy
+          blueprint_archive: { get_input: archive }
+          main_file_name: examples/ec2-image-feature-demo/blueprint.yaml
+        deployment:
+          id: deployment_proxy
+          outputs:
+            key: deployment_proxy_output
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            workflow_id: install
+        stop:
+          inputs:
+            workflow_id: uninstall
+    relationships:
+    - target: manager_install
+      type: cloudify.relationships.depends_on
