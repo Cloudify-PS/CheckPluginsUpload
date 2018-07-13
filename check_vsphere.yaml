@@ -1,0 +1,135 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
+  - imports/manager.yaml
+  - imports/manager_inputs.yaml
+
+inputs:
+
+  vcenter_user:
+    type: string
+
+  vcenter_password:
+    type: string
+
+  vcenter_ip:
+    type: string
+
+  vcenter_port:
+    type: string
+    default: 443
+
+  vcenter_datacenter:
+    type: string
+    description: >
+       vcenter datacenter
+    default: Datacenter
+
+  vcenter_resource_pool:
+    description: >
+      Resource pool name
+    default: Resources
+
+  vsphere_auto_placement:
+    type: string
+    default: true
+
+  template_name:
+    type: string
+    description: >
+      "CentOS 7 template name"
+    default: "CentOS-7.2-x86_64-1511-tmpl"
+
+  vcenter_network:
+    type: string
+    description: >
+      vcenter network
+    default: Internal
+
+  vcenter_datastore:
+    type: string
+    description: >
+      vcenter datastore
+    default: datastore1
+
+  agent_user:
+    default: root
+    type: string
+
+  agent_group:
+    default: root
+
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
+  allowed_hosts:
+    default: []
+
+  allowed_clusters:
+    default: []
+
+  allowed_datastores:
+    default: []
+
+  archive:
+    default: https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/master.zip
+
+node_templates:
+
+  deployment_proxy:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      plugins:
+        - wagon_path: https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/releases/download/2.7.0/cloudify_vsphere_plugin-2.7.0-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/releases/download/2.7.0/plugin.yaml
+        - wagon_path: https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.7.0/cloudify_utilities_plugin-1.7.0-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: http://www.getcloudify.org/spec/utilities-plugin/1.7.0/plugin.yaml
+      client:
+        host: { get_input: manager_host }
+        username: admin
+        password: { get_input: manager_cloudify_password }
+        tenant: default_tenant
+      resource_config:
+        blueprint:
+          id: deployment_proxy
+          blueprint_archive: { get_input: archive }
+          main_file_name: system_tests/resources/linux/other_vm.yaml
+        deployment:
+          id: deployment_proxy
+          inputs:
+            vcenter_ip: { get_input: vcenter_ip }
+            vcenter_user: { get_input: vcenter_user }
+            vcenter_password: { get_input: vcenter_password }
+            vcenter_port: { get_input: vcenter_port }
+            vcenter_datacenter: { get_input: vcenter_datacenter }
+            vcenter_resource_pool: { get_input: vcenter_resource_pool }
+            vsphere_auto_placement: { get_input: vsphere_auto_placement }
+            template_name: { get_input: template_name }
+            vcenter_network: { get_input: vcenter_network }
+            vcenter_datastore: { get_input: vcenter_datastore }
+            agent_user: { get_input: agent_user }
+            agent_group: { get_input: agent_group }
+            manager_network: { get_input: manager_network }
+            install_method: { get_input: install_method }
+            allowed_hosts: { get_input: allowed_hosts }
+            allowed_clusters: { get_input: allowed_clusters }
+            allowed_datastores: { get_input: allowed_datastores }
+          outputs:
+            key: deployment_proxy_output
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            workflow_id: install
+        stop:
+          inputs:
+            workflow_id: uninstall
+    relationships:
+    - target: manager_install
+      type: cloudify.relationships.depends_on
